@@ -2,21 +2,23 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_REGISTRY = 'DOCKER_REGISTRY_URL'
-        DOCKER_REPO = 'DOCKER_REPO_NAME'
+        DOCKER_REPO = 'hello-world'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
         BRANCH_NAME = "${env.BRANCH_NAME}"
         COMMIT_SHA = "${env.GIT_COMMIT}"
     }
     
     stages {
+        stage('Docker Login'){
+            sh 'docker login -u harsh7012@gmail.com -p Harsh7012@gmail.com'
+        }
         stage('Tag Docker Image') {
             when {
                 expression { BRANCH_NAME == 'master' }
             }
             steps {
                 script {
-                    sh "docker tag ${DOCKER_REPO}:latest ${DOCKER_REGISTRY}/${DOCKER_REPO}:${BUILD_NUMBER}"
+                    sh "docker tag ${DOCKER_REPO}:latest ${DOCKER_REPO}:${BUILD_NUMBER}"
                 }
             }
         }
@@ -34,7 +36,7 @@ pipeline {
                         dockerTag = "${BRANCH_NAME}-${BUILD_NUMBER}"
                     }
 
-                    sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_REPO}:${dockerTag} ."
+                    sh "docker build -t ${DOCKER_REPO}:${dockerTag} ."
                 }
             }
         }
@@ -52,7 +54,7 @@ pipeline {
                         dockerTag = "${BRANCH_NAME}-${BUILD_NUMBER}"
                     }
 
-                    sh "docker push ${DOCKER_REGISTRY}/${DOCKER_REPO}:${dockerTag}"
+                    sh "docker push ${DOCKER_REPO}:${dockerTag}"
                 }
             }
         }
@@ -65,7 +67,7 @@ pipeline {
                 script {
                     def dockerTag = "${BRANCH_NAME}-${BUILD_NUMBER}"
 
-                    sh "docker run --rm ${DOCKER_REGISTRY}/${DOCKER_REPO}:${dockerTag} <test_command>"
+                    sh "docker run --rm ${DOCKER_REPO}:${dockerTag} <test_command>"
                 }
             }
         }
@@ -94,7 +96,7 @@ def cleanupDockerImages() {
         def imagesList = images.split('\n')
 
         for (def image in imagesList) {
-            if (image != "${DOCKER_REGISTRY}/${DOCKER_REPO}:${dockerTag}" && !image.endsWith(":latest")) {
+            if (image != "${DOCKER_REPO}:${dockerTag}" && !image.endsWith(":latest")) {
                 sh "docker rmi -f ${image}"
             }
         }
