@@ -9,9 +9,12 @@ pipeline {
     }
     
     stages {
-        stage('Docker Login'){
-            sh 'docker login -u harsh7012@gmail.com -p Harsh7012@gmail.com'
+        stage('Docker Login') {
+            steps {
+                sh 'docker login -u harsh7012@gmail.com -p Harsh7012@gmail.com'
+            }
         }
+
         stage('Tag Docker Image') {
             when {
                 expression { BRANCH_NAME == 'master' }
