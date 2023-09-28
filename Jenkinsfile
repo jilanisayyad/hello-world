@@ -176,7 +176,7 @@
     stage("Install helm push"){
         steps {
             sh """
-            present=$(helm plugin list | grep "push" | wc -l)
+            present=${helm plugin list | grep "push" | wc -l}
             if [ $present -eq 0 ];
             then
                 helm plugin install https://github.com/chartmuseum/helm-push"
