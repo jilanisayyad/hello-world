@@ -91,7 +91,7 @@
     stage('Install AWS CLI') {
         steps {
             sh """
-            if ! command -v aws &> /dev/null
+            if [ ! -f /usr/local/bin/aws]
             then
                 echo "Installing AWS CLI"
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
