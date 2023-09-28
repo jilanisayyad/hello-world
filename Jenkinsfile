@@ -174,9 +174,6 @@
         }
     }
     stage("Build and Push Helm Charts"){
-        environment {
-            PACKAGE_NAME="${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz"
-        }
             steps{
                 sh "helm repo add ${HELM_REPO} ${HELM_URL}"
                 sh "helm repo update"
@@ -185,7 +182,7 @@
                 sh "helm dependency update charts/${APP_NAME}"
                 sh "helm lint charts/${APP_NAME}"
                 sh "helm package charts/${APP_NAME}"
-                sh "mv ${PACKAGE_NAME} ${env.WORKSPACE}/${APP_NAME}.tgz"
+                sh "mv ${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz ${APP_NAME}.tgz"
                 sh "curl -X POST -i --data-binary '@${APP_NAME}.tgz' ${HELM_URL}/api/charts"
                 sh "helm repo update"
                 sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
