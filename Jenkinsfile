@@ -17,7 +17,8 @@
         HELM_REPO="chartmuseum"
         HELM_URL="http://a6df783b0a5764316a5b5b55dcfd3fd8-1517968646.ap-south-1.elb.amazonaws.com:8080"
         APP_NAME="hello-world-app"
-        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDENTIALS'
+        GITHUB_CREDENTIALS_ID = 'GITKEYS'
+        PACKAGE_NAME="${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz"
     }
 
     stages {
@@ -182,8 +183,7 @@
                 sh "helm dependency update charts/${APP_NAME}"
                 sh "helm lint charts/${APP_NAME}"
                 sh "helm package charts/${APP_NAME}"
-                sh "PACKAGE_NAME=${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz"
-                sh "curl -X POST -i --data-binary '@${PACKAGE_NAME}' ${HELM_URL}/api/charts"
+                sh "curl -X POST -i --data-binary '@${PACKAGE_NAME} ' ${HELM_URL}/api/charts"
                 sh "helm repo update"
                 sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
             }
@@ -195,7 +195,7 @@
         }
         stage('Deploy to cluster') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'GITKEYS', keyFileVariable: 'GITKEYS')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: GITHUB_CREDENTIALS_ID, keyFileVariable: 'GITKEYS')]) {
                 sh 'git clone git@github.com/jilanisayyad/gitops-deployments.git'
                 sh 'cd gitops-deployments && git checkout main'
                 sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" {APP_NAME}/application.yaml'
