@@ -76,6 +76,56 @@
             }
         }
     }
-}
-}
+    }
+    stage('Install Apt Packages') {
+    steps {
+        script {
+            sh "sudo apt-get update"
+            sh "sudo apt-get install curl unzip jq -y"
+        }
+    }
+    }
+    stage('Install AWS CLI') {
+        steps {
+            sh """
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install
+            aws --version
+            """
+            sh """
+            curl -LO https://github.com/eksctl-io/eksctl/releases/download/v0.159.0/eksctl_Linux_amd64.tar.gz
+            tar -xzvf eksctl_Linux_amd64.tar.gz
+            chmod +x eksctl
+            mv eksctl /usr/local/bin
+            """
+        }
+    }
+    stage('Install kubectl and HELM'){
+        steps {
+            sh """
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.25.0/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client
+            """
+            sh """
+            curl -LO https://get.helm.sh/helm-v3.13.0-linux-amd64.tar.gz
+            tar -zxvf helm-v3.13.0-linux-amd64.tar.gz
+            chmod +x linux-amd64/helm
+            mv linux-amd64/helm /usr/local/bin/helm
+            helm version
+            """
+        }
+    }
+    stage("Install ArgoCD CLI"){
+        steps {
+            sh """
+            curl -LO https://github.com/argoproj/argo-cd/releases/download/v2.8.4/argocd-linux-amd64
+            chmod +x argocd-linux-amd64
+            mv argocd-linux-amd64 /usr/local/bin/argocd
+            argocd version
+            """
+    }
+    }
 }
