@@ -180,6 +180,7 @@
     }
     stage("Build and Push Helm Charts"){
             steps{
+                sh "helm repo remove ${HELM_REPO}"
                 sh "helm repo add ${HELM_REPO} ${HELM_URL}"
                 sh "helm repo update"
                 sh "sed -i 's/#VERSION#/${BUILD_TAG_WITHOUT_PR}/g' charts/${APP_NAME}/Chart.yaml"
