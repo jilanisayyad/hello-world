@@ -175,7 +175,13 @@
     }
     stage("Install helm push"){
         steps {
-            sh "helm plugin install https://github.com/chartmuseum/helm-push"
+            sh """
+            present=$(helm plugin list | grep "push" | wc -l)
+            if [ $present -eq 0 ];
+            then
+                helm plugin install https://github.com/chartmuseum/helm-push"
+            fi
+            """
         }
     }
     stage("Build and Push Helm Charts"){
