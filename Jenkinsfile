@@ -12,6 +12,8 @@
         CLUSTER_NAME = 'extravagant-outfit-1695878394'
         CLUSTER_REGION = 'ap-south-1'
         AWS_CREDENTIALS_ID = 'AWS_CREDENTIALS'
+        ARGOCD_CREDENTIALS_ID = 'ARGOCD_CREDENTIALS'
+        ARGOCD_SERVER="ac61c769c232b476182346c67c7e43e9-485145539.ap-south-1.elb.amazonaws.com"
     }
 
     stages {
@@ -136,14 +138,14 @@
     }
     stage("Get the AWS Credentials"){
         steps {
-            withCredentials([string(credentialsId: AWS_CREDENTIALS_ID, passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
+            withCredentials([usernamePassword(credentialsId: AWS_CREDENTIALS_ID, passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]){
                 sh """
                 aws configure set aws_access_key_id \${AWS_ACCESS_KEY}
                 aws configure set aws_secret_access_key \${AWS_SECRET_KEY}
                 aws configure list
                 """
             }
-        }
+    }
     }
     stage("Connect to EKS cluster"){
         steps {
@@ -151,6 +153,15 @@
             eksctl utils write-kubeconfig --cluster=${CLUSTER_NAME} --region=${CLUSTER_REGION}
             kubectl get nodes
             """
+        }
+    }
+    stage("Login to ArgoCD"){
+        steps {
+            withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, passwordVariable: 'ARGOCD_PASSWORD', usernameVariable: 'ARGOCD_USERNAME')]) {
+                sh """
+                argocd login \${ARGOCD_SERVER} --username \${ARGOCD_USERNAME} --password \${ARGOCD_PASSWORD} --insecure
+                """
+            }
         }
     }
 }
