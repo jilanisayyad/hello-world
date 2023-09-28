@@ -211,7 +211,6 @@
                 GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git push origin main
                 """
                 sh 'kubectl apply -f gitops-deployments/default'
-                sh 'kubectl apply -f gitops-deployments/${APP_NAME}/helm'
                 }
             }
             post {
