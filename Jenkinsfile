@@ -200,7 +200,7 @@
         stage('Deploy to cluster') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: GITHUB_CREDENTIALS_ID, keyFileVariable: 'GITKEYS')]) {
-                sh 'git clone git@github.com/jilanisayyad/gitops-deployments.git'
+                sh 'git clone git@github.com:jilanisayyad/gitops-deployments.git'
                 sh 'cd gitops-deployments && git checkout main'
                 sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" {APP_NAME}/application.yaml'
                 sh 'git add .'
