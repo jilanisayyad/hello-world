@@ -15,7 +15,7 @@
         ARGOCD_CREDENTIALS_ID = 'ARGOCD_CREDENTIALS'
         ARGOCD_SERVER="ac61c769c232b476182346c67c7e43e9-485145539.ap-south-1.elb.amazonaws.com"
         HELM_REPO="chartmuseum"
-        HELM_URL="http://a6df783b0a5764316a5b5b55dcfd3fd8-1517968646.ap-south-1.elb.amazonaws.com:8080"
+        HELM_URL="http://af363009483764474abc47c611b6cf3f-1954008745.ap-south-1.elb.amazonaws.com:8080"
         APP_NAME="hello-world-app"
         GITHUB_CREDENTIALS_ID = 'GITKEYS'
     }
@@ -173,6 +173,11 @@
             }
         }
     }
+    stage("Install helm push"){
+        steps {
+            sh "helm plugin install https://github.com/chartmuseum/helm-push"
+        }
+    }
     stage("Build and Push Helm Charts"){
             steps{
                 sh "helm repo add ${HELM_REPO} ${HELM_URL}"
@@ -181,9 +186,7 @@
                 sh "sed -i 's/#APP_VERSION#/${BUILD_TAG}/g' charts/${APP_NAME}/Chart.yaml"
                 sh "helm dependency update charts/${APP_NAME}"
                 sh "helm lint charts/${APP_NAME}"
-                sh "helm package charts/${APP_NAME}"
-                sh "mv ${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz ${APP_NAME}.tgz"
-                sh "curl -X POST -i --data-binary '@${APP_NAME}.tgz' ${HELM_URL}/api/charts"
+                sh "helm cm-push charts/${APP_NAME} ${HELM_REPO}"
                 sh "helm repo update"
                 sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
             }
