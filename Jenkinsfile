@@ -17,6 +17,7 @@
         HELM_REPO="chartmuseum"
         HELM_URL="http://a6df783b0a5764316a5b5b55dcfd3fd8-1517968646.ap-south-1.elb.amazonaws.com:8080"
         APP_NAME="hello-world-app"
+        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDENTIALS'
     }
 
     stages {
@@ -181,7 +182,7 @@
                 sh "helm dependency update charts/${APP_NAME}"
                 sh "helm lint charts/${APP_NAME}"
                 sh "helm package charts/${APP_NAME}"
-                sh "curl -X POST -i --data-binary '@${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz' ${HELM_URL}/api/charts"
+                sh "curl -X POST -i --data-binary '@${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz' ${HELM_URL}/api/charts"
                 sh "helm repo update"
                 sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
             }
@@ -193,13 +194,13 @@
         }
         stage('Deploy to cluster') {
             steps {
-                withCredentials([usernamePassword(credentialsId: GITHUB_CREDENTIALS_ID, passwordVariable: 'GIT_ACCESS_TOKEN', usernameVariable: 'GIT_USER')]) {
-                sh 'git clone https://${GIT_USER}:${GIT_ACCESS_TOKEN}@github.com/jilanisayyad/gitops-deployments.git'
+                withCredentials([sshUserPrivateKey(credentialsId: 'GITKEYS', keyFileVariable: 'GITKEYS')]) {
+                sh 'git clone git@github.com/jilanisayyad/gitops-deployments.git'
                 sh 'cd gitops-deployments && git checkout main'
-                sh 'git config --global user.email "sayyedjilani88@gmail.com"'
-                sh 'git config --global user.name "Jilani Sayyad"'
                 sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" {APP_NAME}/application.yaml'
-                sh 'git add . && git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR}" && git push origin main'
+                sh 'git add ."
+                sh 'git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR} to ${CLUSTER_NAME}"'
+                sh 'GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git push origin main'
                 sh 'kubectl apply -f default'
                 sh 'kubectl apply -f ${APP_NAME}/helm'
                 }
