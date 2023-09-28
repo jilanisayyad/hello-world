@@ -182,7 +182,8 @@
                 sh "helm dependency update charts/${APP_NAME}"
                 sh "helm lint charts/${APP_NAME}"
                 sh "helm package charts/${APP_NAME}"
-                sh "curl -X POST -i --data-binary '@${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz' ${HELM_URL}/api/charts"
+                sh "PACKAGE_NAME=$(ls ${APP_NAME}*.tgz)"
+                sh "curl -X POST -i --data-binary '@${PACKAGE_NAME}' ${HELM_URL}/api/charts"
                 sh "helm repo update"
                 sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
             }
