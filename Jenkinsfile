@@ -47,8 +47,7 @@
                 }
             }
         }
-
-         stage('Build and Push Docker Image') {
+        stage('Build and Push Docker Image') {
             steps {
                 script {
                     def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.DOCKER_TAG}"
@@ -58,8 +57,6 @@
                     }
                 }
             }
-        }
-
     stage('Test Docker Image') {
     steps {
         script {
