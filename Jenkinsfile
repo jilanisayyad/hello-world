@@ -34,7 +34,7 @@
                     def version = readFile(env.VERSION_FILE).trim()
                     def tag
 
-                    if (branchName == 'master') {
+                    if (branchName == 'main') {
                         tag = "latest-${version}"
                     } else if (branchName.startsWith('pull/')) {
                         tag = "${branchName.replaceAll('/', '-').toLowerCase()}-pr-${version}"
