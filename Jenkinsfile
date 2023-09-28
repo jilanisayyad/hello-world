@@ -52,9 +52,9 @@
             steps {
                 script {
                     def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.DOCKER_TAG}"
-                    docker.build(dockerImage, "--build-arg VERSION=${env.DOCKER_TAG} .")
-                    docker.withRegistry("${DOCKER_REGISTRY}", "${env.DOCKER_CREDENTIAL_ID}") {
-                        dockerImage.push()
+                    sh "docker build --build-arg VERSION=${env.DOCKER_TAG} -t ${dockerImage} ."
+                    sh "docker push ${dockerImage}"
+                    sh "docker rmi ${dockerImage}"
                     }
                 }
             }
