@@ -2,7 +2,7 @@
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'registry-1.docker.io'
+        DOCKER_REGISTRY = 'jilani1'
         DOCKER_REPO = 'hello-world'
         DOCKER_CREDENTIAL_ID = 'DOCKER_CREDENTIALS'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
@@ -27,7 +27,7 @@
             }
         }
 
-         stage('Determine Tag') {
+        stage('Determine Tag') {
             steps {
                 script {
                     def branchName = env.BRANCH_NAME
@@ -64,16 +64,15 @@
             def containerName = "test-${env.DOCKER_TAG}"
             
             try {
-                def exitCode = docker.image(dockerImage).withRun("-d --name ${containerName}") { c ->
-                    sleep(30)
-                    sh "exit 1"
-                }
-
-                if (exitCode != 0) {
-                    error "Test failed inside the Docker container."
-                }
-            } finally {
-                sh "docker rm -f ${containerName}"
+                sh "docker pull ${dockerImage}"
+                sh "docker run -d --name ${containerName} ${dockerImage}"
+                sh "docker exec ${containerName} curl -s localhost:8080"
+                sh "docker stop ${containerName}"
+                sh "docker rm ${containerName}"
+            } catch (err) {
+                sh "docker stop ${containerName}"
+                sh "docker rm ${containerName}"
+                throw err
             }
         }
     }
