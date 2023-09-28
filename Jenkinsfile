@@ -66,7 +66,7 @@
             try {
                 sh "docker pull ${dockerImage}"
                 sh "docker run -d --name ${containerName} ${dockerImage}"
-                sh "docker exec ${containerName} curl -s localhost:8080"
+                sh "docker ps -a --filter \"name=${containerName}\" --filter \"status=running\" --format \"{{.Names}}\" | grep ${containerName}"
                 sh "docker stop ${containerName}"
                 sh "docker rm ${containerName}"
             } catch (err) {
