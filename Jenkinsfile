@@ -91,10 +91,14 @@
     stage('Install AWS CLI') {
         steps {
             sh """
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            ./aws/install
-            aws --version
+            if ! command -v aws &> /dev/null
+            then
+                echo "Installing AWS CLI"
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                unzip awscliv2.zip
+                yes | ./aws/install
+                aws --version
+            fi
             """
             sh """
             curl -LO https://github.com/eksctl-io/eksctl/releases/download/v0.159.0/eksctl_Linux_amd64.tar.gz
