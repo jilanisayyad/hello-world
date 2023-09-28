@@ -80,8 +80,8 @@
     stage('Install Apt Packages') {
     steps {
         script {
-            sh "sudo apt-get update"
-            sh "sudo apt-get install curl unzip jq -y"
+            sh "apt-get update"
+            sh "apt-get install curl unzip jq -y"
         }
     }
     }
