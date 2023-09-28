@@ -18,7 +18,6 @@
         HELM_URL="http://a6df783b0a5764316a5b5b55dcfd3fd8-1517968646.ap-south-1.elb.amazonaws.com:8080"
         APP_NAME="hello-world-app"
         GITHUB_CREDENTIALS_ID = 'GITKEYS'
-        PACKAGE_NAME="${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz"
     }
 
     stages {
@@ -175,6 +174,9 @@
         }
     }
     stage("Build and Push Helm Charts"){
+        environment {
+            PACKAGE_NAME="${env.WORKSPACE}/${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz"
+        }
             steps{
                 sh "helm repo add ${HELM_REPO} ${HELM_URL}"
                 sh "helm repo update"
