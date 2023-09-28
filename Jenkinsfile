@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         DOCKER_REPO = 'hello-world'
+        DOCKER_CREDENTIAL_ID = 'DOCKER_CREDENTIALS'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
         BRANCH_NAME = "${env.BRANCH_NAME}"
         COMMIT_SHA = "${env.GIT_COMMIT}"
@@ -10,8 +11,12 @@ pipeline {
     
     stages {
         stage('Docker Login') {
-            steps {
-                sh 'docker login -u harsh7012 -p Harsh70124%'
+             steps {
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh """
+                        docker login -u \${DOCKER_USERNAME} -p \${DOCKER_PASSWORD}
+                    """
+                }
             }
         }
 
