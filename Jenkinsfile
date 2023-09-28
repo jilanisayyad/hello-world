@@ -126,6 +126,7 @@
             mv argocd-linux-amd64 /usr/local/bin/argocd
             argocd version
             """
+        }
     }
-    }
+}
 }
