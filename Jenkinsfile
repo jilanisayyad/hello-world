@@ -202,7 +202,8 @@
                 withCredentials([sshUserPrivateKey(credentialsId: GITHUB_CREDENTIALS_ID, keyFileVariable: 'GITKEYS')]) {
                 sh 'GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git clone git@github.com:jilanisayyad/gitops-deployments.git'
                 sh 'cd gitops-deployments && git checkout main'
-                sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" ${APP_NAME}/helm/application.yaml'
+                sh 'ls -l'
+                sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" ${APP_NAME}/application.yaml'
                 sh 'git add .'
                 sh 'git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR} to ${CLUSTER_NAME}"'
                 sh 'GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git push origin main'
