@@ -1,5 +1,5 @@
 apiVersion: v2
-name: hello-world
+name: hello-world-app
 description: A Helm chart for Kubernetes
 type: application
 version: "#VERSION#"

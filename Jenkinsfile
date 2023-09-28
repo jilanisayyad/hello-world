@@ -189,7 +189,7 @@
                 sh "helm lint charts/${APP_NAME}"
                 sh "helm cm-push charts/${APP_NAME} ${HELM_REPO}"
                 sh "helm repo update"
-                sh "helm search repo hello-world --versions | grep ${BUILD_TAG_WITHOUT_PR}"
+                sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
             }
             post {
                 always {
