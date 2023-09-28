@@ -9,6 +9,9 @@
         BRANCH_NAME = "${env.BRANCH_NAME}"
         COMMIT_SHA = "${env.GIT_COMMIT}"
         VERSION_FILE = 'version.txt'
+        CLUSTER_NAME = 'extravagant-outfit-1695878394'
+        CLUSTER_REGION = 'ap-south-1'
+        AWS_CREDENTIALS_ID = 'AWS_CREDENTIALS'
     }
 
     stages {
@@ -124,7 +127,25 @@
             curl -LO https://github.com/argoproj/argo-cd/releases/download/v2.8.4/argocd-linux-amd64
             chmod +x argocd-linux-amd64
             mv argocd-linux-amd64 /usr/local/bin/argocd
-            argocd version
+            """
+        }
+    }
+    stage("Get the AWS Credentials"){
+        steps {
+            withCredentials([string(credentialsId: AWS_CREDENTIALS_ID, passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
+                sh """
+                aws configure set aws_access_key_id \${AWS_ACCESS_KEY}
+                aws configure set aws_secret_access_key \${AWS_SECRET_KEY}
+                aws configure list
+                """
+            }
+        }
+    }
+    stage("Connect to EKS cluster"){
+        steps {
+            sh """
+            eksctl utils write-kubeconfig --cluster=${CLUSTER_NAME} --region=${CLUSTER_REGION}
+            kubectl get nodes
             """
         }
     }
