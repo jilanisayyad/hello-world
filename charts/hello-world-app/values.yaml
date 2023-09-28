@@ -1,0 +1,39 @@
+replicaCount: 3
+image:
+  repository: jilani1/hello-world
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets:
+  - name: nexus-credentials
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: LoadBalancer
+  port: 5000
+  hostPort: 8080
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

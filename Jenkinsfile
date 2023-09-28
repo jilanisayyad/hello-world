@@ -14,6 +14,9 @@
         AWS_CREDENTIALS_ID = 'AWS_CREDENTIALS'
         ARGOCD_CREDENTIALS_ID = 'ARGOCD_CREDENTIALS'
         ARGOCD_SERVER="ac61c769c232b476182346c67c7e43e9-485145539.ap-south-1.elb.amazonaws.com"
+        HELM_REPO="chartmuseum"
+        HELM_URL="http://a6df783b0a5764316a5b5b55dcfd3fd8-1517968646.ap-south-1.elb.amazonaws.com:8080"
+        APP_NAME="hello-world-app"
     }
 
     stages {
@@ -23,7 +26,7 @@
             }
         }
         stage('Docker Login') {
-             steps {
+            steps {
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh """
                         docker login -u \${DOCKER_USERNAME} -p \${DOCKER_PASSWORD}
@@ -32,31 +35,36 @@
             }
         }
 
-        stage('Determine Tag') {
+        stage('Create the Build Tag') {
             steps {
                 script {
                     def branchName = env.BRANCH_NAME
-                    def version = readFile(env.VERSION_FILE).trim()
-                    def tag
-
+                    def buildNumber = env.BUILD_NUMBER
+                    def sprintNumberFile = new File("${env.WORKSPACE}/sprint.txt")
+                    def sprintNumber = sprintNumberFile.text
+                    def sprintYearFile = new File("${env.WORKSPACE}/sprint_year.txt")
+                    def sprintYear = sprintYearFile.text
+                    def buildTag = "pr-${sprintYear}.${sprintNumber}.${buildNumber}"
                     if (branchName == 'main') {
-                        tag = "latest-${version}"
-                    } else if (branchName.startsWith('pull/')) {
-                        tag = "${branchName.replaceAll('/', '-').toLowerCase()}-pr-${version}"
-                    } else {
-                        tag = "build-${env.BUILD_NUMBER}-${version}"
+                        buildTag = "${sprintYear}.${sprintNumber}.${buildNumber}"
                     }
-
-                    echo "Using Docker tag: ${tag}"
-                    env.DOCKER_TAG = tag
+                    if (branchName.startsWith('release/')) {
+                        def releaseVersion=branchName.spilt('/')[1]
+                        buildTag = "${releaseVersion}.${sprintYear}.${buildNumber}"
+                    }
+                    env.BUILD_TAG = buildTag
+                    env.BUILD_TAG_WITHOUT_PR = buildTag.replace('pr-', '')
+                    echo "BUILD_TAG: ${env.BUILD_TAG}"
+                    echo "BUILD_TAG_WITHOUT_PR: ${env.BUILD_TAG_WITHOUT_PR}"
+                    currentBuild.displayName = "#${buildTag}"
                 }
             }
         }
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.DOCKER_TAG}"
-                    sh "docker build --build-arg VERSION=${env.DOCKER_TAG} -t ${dockerImage} ."
+                    def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.BUILD_TAG}"
+                    sh "docker build --build-arg VERSION=${env.BUILD_TAG} -t ${dockerImage} ."
                     sh "docker push ${dockerImage}"
                     sh "docker rmi ${dockerImage}"
                     }
@@ -65,8 +73,8 @@
     stage('Test Docker Image') {
     steps {
         script {
-            def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.DOCKER_TAG}"
-            def containerName = "test-${env.DOCKER_TAG}"
+            def dockerImage = "${DOCKER_REGISTRY}/${env.DOCKER_REPO}:${env.BUILD_TAG}"
+            def containerName = "test-${env.BUILD_TAG}"
             
             try {
                 sh "docker pull ${dockerImage}"
@@ -164,5 +172,43 @@
             }
         }
     }
+    stage("Build and Push Helm Charts"){
+            steps{
+                sh "helm repo add ${HELM_REPO} ${HELM_URL}"
+                sh "helm repo update"
+                sh "sed -i 's/#VERSION#/${BUILD_TAG_WITHOUT_PR}/g' charts/${APP_NAME}/Chart.yaml"
+                sh "sed -i 's/#APP_VERSION#/${BUILD_TAG}/g' charts/${APP_NAME}/Chart.yaml"
+                sh "helm dependency update charts/${APP_NAME}"
+                sh "helm lint charts/${APP_NAME}"
+                sh "helm package charts/${APP_NAME}"
+                sh "curl -X POST -i --data-binary '@${APP_NAME}-${BUILD_TAG_WITHOUT_PR}.tgz' ${HELM_URL}/api/charts"
+                sh "helm repo update"
+                sh "helm search repo ${APP_NAME} --versions | grep ${BUILD_TAG_WITHOUT_PR}"
+            }
+            post {
+                always {
+                    cleanWs()
+                }
+            }
+        }
+        stage('Deploy to cluster') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: GITHUB_CREDENTIALS_ID, passwordVariable: 'GIT_ACCESS_TOKEN', usernameVariable: 'GIT_USER')]) {
+                sh 'git clone https://${GIT_USER}:${GIT_ACCESS_TOKEN}@github.com/jilanisayyad/gitops-deployments.git'
+                sh 'cd gitops-deployments && git checkout main'
+                sh 'git config --global user.email "sayyedjilani88@gmail.com"'
+                sh 'git config --global user.name "Jilani Sayyad"'
+                sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" {APP_NAME}/application.yaml'
+                sh 'git add . && git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR}" && git push origin main'
+                sh 'kubectl apply -f default'
+                sh 'kubectl apply -f ${APP_NAME}/helm'
+                }
+            }
+            post {
+                always {
+                    cleanWs()
+                }
+            }
+        }
 }
 }
