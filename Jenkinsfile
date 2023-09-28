@@ -202,7 +202,12 @@
                 withCredentials([sshUserPrivateKey(credentialsId: GITHUB_CREDENTIALS_ID, keyFileVariable: 'GITKEYS')]) {
                 sh 'GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git clone git@github.com:jilanisayyad/gitops-deployments.git'
                 sh 'sed -i "s/\\(targetRevision:\\) .*/\\1 ${BUILD_TAG_WITHOUT_PR}/" gitops-deployments/${APP_NAME}/application.yaml'
-                sh 'cd gitops-deployments && git add . && git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR} to ${CLUSTER_NAME}" && GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git push origin main'
+                sh """
+                cd gitops-deployments && \
+                git add . && \
+                git commit -m "Deploy ${BUILD_TAG_WITHOUT_PR} to ${CLUSTER_NAME}" && \
+                GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${GITKEYS}" git push origin main
+                """
                 sh 'kubectl apply -f gitops-deployments/default'
                 sh 'kubectl apply -f gitops-deployments/${APP_NAME}/helm'
                 }
